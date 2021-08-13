@@ -39,6 +39,7 @@ public class ViewDataActivity extends AppCompatActivity {
 
     GraphView graphSpeed, graphDistance, graphTemp, graphVolt;
     LineGraphSeries<com.jjoe64.graphview.series.DataPoint> seriesSpeed = new LineGraphSeries<>();
+    LineGraphSeries<com.jjoe64.graphview.series.DataPoint> seriesSpeedAvg = new LineGraphSeries<>();
     LineGraphSeries<com.jjoe64.graphview.series.DataPoint> seriesDistance = new LineGraphSeries<>();
     LineGraphSeries<com.jjoe64.graphview.series.DataPoint> seriesTemp = new LineGraphSeries<>();
     LineGraphSeries<com.jjoe64.graphview.series.DataPoint> seriesTempEsc = new LineGraphSeries<>();
@@ -91,16 +92,17 @@ public class ViewDataActivity extends AppCompatActivity {
             return;
         }
 
+        DataPoint firstRow = data.rows.get(0);
+        DataPoint lastRow = data.rows.get(data.rows.size() -1);
+
         for (int i = lastIndex; i < data.rows.size(); ++i) {
             DataPoint row = data.rows.get(i);
+            row.computeAverageSpeed(firstRow.time);
             if (row.speed > maxSpeed) {
                 maxSpeed = row.speed;
                 maxSpeedMiles = row.speedMiles;
             }
         }
-
-        DataPoint firstRow = data.rows.get(0);
-        DataPoint lastRow = data.rows.get(data.rows.size() -1);
 
         float batteryStart = firstRow.batteryLevel;
         float batteryEnd = lastRow.batteryLevel;
@@ -179,6 +181,7 @@ public class ViewDataActivity extends AppCompatActivity {
             if (row.time >= nextTimestamp) {
                 nextTimestamp = row.time + sampling;
                 seriesSpeed.appendData(new com.jjoe64.graphview.series.DataPoint(row.time, row.speed), true, MAX_DATA_POINTS);
+                seriesSpeedAvg.appendData(new com.jjoe64.graphview.series.DataPoint(row.time, row.averageSpeed), true, MAX_DATA_POINTS);
                 seriesDistance.appendData(new com.jjoe64.graphview.series.DataPoint(row.time, row.distance), true, MAX_DATA_POINTS);
                 seriesTemp.appendData(new com.jjoe64.graphview.series.DataPoint(row.time, row.motorTemp), true, MAX_DATA_POINTS);
                 seriesTempEsc.appendData(new com.jjoe64.graphview.series.DataPoint(row.time, row.escTemp), true, MAX_DATA_POINTS);
@@ -194,6 +197,7 @@ public class ViewDataActivity extends AppCompatActivity {
         graphTemp.removeAllSeries();
         graphVolt.removeAllSeries();
         graphSpeed.addSeries(seriesSpeed);
+        graphSpeed.addSeries(seriesSpeedAvg);
         graphDistance.addSeries(seriesDistance);
         graphTemp.addSeries(seriesTemp);
         graphTemp.addSeries(seriesTempEsc);
@@ -236,6 +240,8 @@ public class ViewDataActivity extends AppCompatActivity {
         graphVolt.setTitle("Battery health");
 
         // Legend
+        graphSpeed.getLegendRenderer().setVisible(true);
+        graphSpeed.getLegendRenderer().setBackgroundColor(getResources().getColor(R.color.legend_bg));
         graphTemp.getLegendRenderer().setVisible(true);
         graphTemp.getLegendRenderer().setBackgroundColor(getResources().getColor(R.color.legend_bg));
         graphVolt.getLegendRenderer().setVisible(true);
@@ -252,8 +258,13 @@ public class ViewDataActivity extends AppCompatActivity {
         seriesVoltage.setTitle("Input voltage (V)");
         seriesBattery.setColor(getResources().getColor(R.color.green));
         seriesBattery.setTitle("Battery level (%)");
+        // - Speed
+        seriesSpeedAvg.setColor(getResources().getColor(R.color.orange));
+        seriesSpeedAvg.setTitle("Average");
+        seriesSpeed.setTitle("Instant");
 
         graphSpeed.addSeries(seriesSpeed);
+        graphSpeed.addSeries(seriesSpeedAvg);
         graphDistance.addSeries(seriesDistance);
         graphTemp.addSeries(seriesTemp);
         graphTemp.addSeries(seriesTempEsc);

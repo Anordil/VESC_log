@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class DataPoint implements Serializable {
 
     public long time;
-    public float batteryLevel, motorTemp, escTemp, distance, speed, inputVoltage;
+    public float batteryLevel, motorTemp, escTemp, distance, speed, inputVoltage, averageSpeed;
     public float distanceMiles, speedMiles;
 
     public DataPoint(long time, float batteryLevel, float motorTemp, float distance, float speed, float inputVoltage,
@@ -31,5 +31,10 @@ public class DataPoint implements Serializable {
     private static float roundToThreeDecimal(float input) {
         int ten = (int)(1000 * input);
         return ten / 1000f;
+    }
+
+    public void computeAverageSpeed(long startTime) {
+        float average = this.distance / (this.time - startTime); //km / ms
+        this.averageSpeed = 3.6f * average * 1000000f;
     }
 }
